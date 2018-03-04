@@ -20,7 +20,7 @@ int main() {
 
 		for (int i = 0; i < nRuns; i++) {
 			if (i & 1) {
-				const double amount = rand()*1000/RAND_MAX;
+				const double amount = (double)rand()*1000/RAND_MAX;
 				const double b = unsynchronizedAccount + amount;
 				account.deposit(amount);
 				unsynchronizedAccount = b;

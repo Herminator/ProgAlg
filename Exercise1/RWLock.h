@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <condition_variable>
 
 using namespace std;
 
@@ -12,23 +13,43 @@ class RWLock {
 
 public:
 	size_t getReaders() const {
-		// TODO
-		return 0;
+		return m_readLocked;
 	}
 
 	void lockR() {
-		// TODO
+        unique_lock<mutex> monitor(m_mutex);
+        while (m_writeLocked && m_readLocked == 0) m_readingAllowed.wait(monitor);
+
+        m_readLocked++;
+        m_writeLocked = true;
 	}
 
 	void unlockR() {
-		// TODO
+        unique_lock<mutex> monitor(m_mutex);
+
+        m_readLocked--;
+        if (m_readLocked == 0)
+        {
+            m_writeLocked = false;
+            m_readingAllowed.notify_all();
+            m_writingAllowed.notify_all();
+        }
+
 	}
 
 	void lockW() {
-		// TODO
+        unique_lock<mutex> monitor(m_mutex);
+        while (m_writeLocked) m_writingAllowed.wait(monitor);
+
+        m_writeLocked = true;
+
 	}
 
 	void unlockW() {
-		// TODO
+        unique_lock<mutex> monitor(m_mutex);
+
+        m_writeLocked = false;
+        m_readingAllowed.notify_all();
+        m_writingAllowed.notify_all();
 	}
 };

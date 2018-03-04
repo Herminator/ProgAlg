@@ -2,6 +2,7 @@
 
 #include "RWLock.h"
 #include <chrono>
+#include <thread>
 
 class BankAccount {
 	mutable RWLock m_lock;	// mutable: can be modified even in const methods
@@ -9,16 +10,24 @@ class BankAccount {
 
 public:
 	void deposit(double amount) {
-		// TODO
+
+		m_lock.lockW();
+		this_thread::sleep_for(chrono::milliseconds(10));
+		m_balance = m_balance + amount;
+		m_lock.unlockW();
 	}
 
 	double getBalance() const {
-		// TODO
-		return 0;
+		double balance;
+
+		m_lock.lockR();
+		this_thread::sleep_for(chrono::milliseconds(10));
+		balance = m_balance;
+		m_lock.unlockR();
+		return balance;
 	}
 
 	size_t getReaders() const {
-		// TODO
-		return 0;
+		return m_lock.getReaders();
 	}
 };
