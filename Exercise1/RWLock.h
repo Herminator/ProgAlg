@@ -18,28 +18,28 @@ public:
 
 	void lockR() {
         unique_lock<mutex> monitor(m_mutex);
-        while (m_writeLocked && m_readLocked == 0) m_readingAllowed.wait(monitor);
+        while (m_writeLocked == true) m_readingAllowed.wait(monitor);
 
         m_readLocked++;
-        m_writeLocked = true;
 	}
 
 	void unlockR() {
         unique_lock<mutex> monitor(m_mutex);
 
-        m_readLocked--;
-        if (m_readLocked == 0)
+        if (m_readLocked > 0)
         {
-            m_writeLocked = false;
-            m_readingAllowed.notify_all();
-            m_writingAllowed.notify_all();
+            m_readLocked--;
+            if (m_readLocked == 0)
+            {
+                m_writingAllowed.notify_one();
+            }
         }
 
 	}
 
 	void lockW() {
         unique_lock<mutex> monitor(m_mutex);
-        while (m_writeLocked) m_writingAllowed.wait(monitor);
+        while (m_readLocked > 0 || m_writeLocked == true) m_writingAllowed.wait(monitor);
 
         m_writeLocked = true;
 
@@ -50,6 +50,6 @@ public:
 
         m_writeLocked = false;
         m_readingAllowed.notify_all();
-        m_writingAllowed.notify_all();
+        m_writingAllowed.notify_one();
 	}
 };
